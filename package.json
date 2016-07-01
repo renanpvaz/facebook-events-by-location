@@ -15,11 +15,14 @@
     "request-promise": "^0.4.3"
   },
   "bugs": {
-    "url" : "https://github.com/tobilg/facebook-events-by-location/issues"
+    "url": "https://github.com/tobilg/facebook-events-by-location/issues"
   },
   "repository": {
-    "type" : "git",
-    "url" : "https://github.com/tobilg/facebook-events-by-location.git"
+    "type": "git",
+    "url": "https://github.com/tobilg/facebook-events-by-location.git"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "babel-preset-es2015": "^6.9.0"
+  }
 }
