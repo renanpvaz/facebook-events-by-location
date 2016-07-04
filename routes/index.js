@@ -6,7 +6,10 @@ const Promise = require('bluebird');
 const rp = require('request-promise');
 
 const baseUrl = 'https://graph.facebook.com/v2.5/';
-const fieldsQs = 'id,name,cover.fields(id,source),picture.type(large),location,events.fields(id,name,cover.fields(id,source),picture.type(large),description,start_time,attending_count,declined_count,maybe_count,noreply_count).since(';
+const fieldsQs = 'id,name,cover.fields(id,source),picture.' +
+  'type(large),location,events.fields(id,name,cover.fields' +
+  '(id,source),picture.type(large),description,start_time,' +
+  'attending_count,declined_count,maybe_count,noreply_count).since(';
 
 function calculateStarttimeDifference(currentTime, dataString) {
   return (new Date(dataString).getTime() - (currentTime * 1000 )) / 1000;
@@ -103,6 +106,7 @@ router.get('/events', function(req, res) {
             type: 'place',
             center: `${query.lat}, ${query.lng}`,
             distance: query.distance,
+            q: query.q,
             limit: 1000,
             fields: 'id'
         },
@@ -117,8 +121,7 @@ router.get('/events', function(req, res) {
 
         venuesCount = data.length;
 
-        try {
-          data.forEach(function(idObj, index, arr) {
+          data.forEach((idObj, index, arr) => {
             tempArray.push(idObj.id);
 
             if (tempArray.length >= idLimit) {
@@ -130,8 +133,6 @@ router.get('/events', function(req, res) {
           if (tempArray.length > 0) {
             ids.push(tempArray);
           }
-        } catch (e) {
-          console.error(e);
         }
 
         return ids;
@@ -139,8 +140,7 @@ router.get('/events', function(req, res) {
     ).then((ids) => {
       let promises = [];
 
-      try {
-        ids.forEach(function(idArray, index, arr) {
+        ids.forEach((idArray, index, arr) => {
           let options = {
               uri: `${baseUrl}`,
               qs: {
@@ -152,8 +152,6 @@ router.get('/events', function(req, res) {
 
           promises.push(rp.get(options));
         });
-      } catch (e) {
-        console.error(e);
       }
 
       return promises;
@@ -171,11 +169,10 @@ router.get('/events', function(req, res) {
         Object.getOwnPropertyNames(resObj).forEach((venueId, index, array) => {
           let venue = resObj[venueId];
 
-          try {
             if (venue.events && venue.events.data.length > 0) {
               venuesWithEvents++;
 
-              venue.events.data.forEach(function(event, index, array) {
+              venue.events.data.forEach((event, index, array) => {
                 let result = {
                   venueId,
                   venueName: venue.name,
@@ -202,8 +199,6 @@ router.get('/events', function(req, res) {
                 eventsCount++;
               });
             }
-          } catch (e) {
-            console.error(e);
           }
         });
       });
