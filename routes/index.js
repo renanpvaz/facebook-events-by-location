@@ -11,82 +11,11 @@ const fieldsQs = 'id,name,cover.fields(id,source),picture.' +
   '(id,source),picture.type(large),description,start_time,' +
   'attending_count,declined_count,maybe_count,noreply_count).since(';
 
-function calculateStarttimeDifference(currentTime, dataString) {
-  return (new Date(dataString).getTime() - (currentTime * 1000 )) / 1000;
-}
-
-function compareVenue(a, b) {
-  return compare(a, b, 'venueName');
-}
-
-function compareTimeFromNow(a, b) {
-  return compare(a, b, 'eventTimeFromNow');
-}
-
-function compareDistance(a, b) {
-  a.eventDistance = parseInt(a.eventDistance, 10);
-  b.eventDistance = parseInt(b.eventDistance, 10);
-
-  return compare(a, b, 'eventDistance');
-}
-
-function compare(valA, valB, property) {
-  if (valA[property] < valB[property]) {
-    return -1;
-  }
-  else if (valA[property] > valB[property]) {
-    return 1;
-  }
-
-  return 0;
-}
-
-function comparePopularity(a,b) {
-  let aStats = a.eventStats;
-  let bStats = b.eventStats;
-
-  if ((aStats.attendingCount + (aStats.maybeCount / 2)) < (bStats.attendingCount + (bStats.maybeCount / 2)))
-    return 1;
-  if ((aStats.attendingCount + (aStats.maybeCount / 2)) > (bStats.attendingCount + (bStats.maybeCount / 2)))
-    return -1;
-  return 0;
-}
-
-function haversineDistance(coordsA, coordsB, isMiles) {
-  const R = 6371;
-
-  let latA = coordsA[0];
-  let lonA = coordsA[1];
-
-  let latB = coordsB[0];
-  let lonB = coordsB[1];
-
-  function toRad(x) {
-    return x * Math.PI / 180;
-  }
-
-  let x1 = latB - latA;
-  let dLat = toRad(x1);
-  let x2 = lonB - lonA;
-  let dLon = toRad(x2);
-  let a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(toRad(latA)) * Math.cos(toRad(latB)) *
-      Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  let c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  let d = R * c;
-
-  if(!!isMiles) {
-    d /= 1.60934;
-  }
-
-  return d;
-}
-
-router.get('/', function(req, res) {
+router.get('/', (req, res) => {
   res.json({ 'message': 'Welcome to the Facebook Event Search service!' });
 });
 
-router.get('/events', function(req, res) {
+router.get('/events', (req, res) => {
   let query = req.query;
 
   if (!query.lat || !query.lng || !query.distance || !query.access_token) {
@@ -100,13 +29,13 @@ router.get('/events', function(req, res) {
     let venuesCount = 0, venuesWithEvents = 0, eventsCount = 0;
 
     const options = {
-        uri: `${baseUrl}/search`,
+        uri: `${baseUrl}search`,
         qs: {
             access_token: query.access_token,
             type: 'place',
             center: `${query.lat}, ${query.lng}`,
             distance: query.distance,
-            q: query.q,
+            q: query.q || '',
             limit: 1000,
             fields: 'id'
         },
@@ -133,7 +62,6 @@ router.get('/events', function(req, res) {
           if (tempArray.length > 0) {
             ids.push(tempArray);
           }
-        }
 
         return ids;
       }
@@ -152,10 +80,8 @@ router.get('/events', function(req, res) {
 
           promises.push(rp.get(options));
         });
-      }
 
       return promises;
-
     }).then((promisifiedRequests) => {
       return Promise.all(promisifiedRequests)
     })
@@ -199,7 +125,6 @@ router.get('/events', function(req, res) {
                 eventsCount++;
               });
             }
-          }
         });
       });
 
@@ -227,10 +152,80 @@ router.get('/events', function(req, res) {
         }
       });
     }).catch((e) => {
-      console.log(e);
       res.status(500).send({error: e});
     });
   }
 });
+
+function calculateStarttimeDifference(currentTime, dataString) {
+  return (new Date(dataString).getTime() - (currentTime * 1000 )) / 1000;
+}
+
+function compareVenue(a, b) {
+  return compare(a, b, 'venueName');
+}
+
+function compareTimeFromNow(a, b) {
+  return compare(a, b, 'eventTimeFromNow');
+}
+
+function compareDistance(a, b) {
+  a.eventDistance = parseInt(a.eventDistance, 10);
+  b.eventDistance = parseInt(b.eventDistance, 10);
+
+  return compare(a, b, 'eventDistance');
+}
+
+function compare(valA, valB, property) {
+  if (valA[property] < valB[property]) {
+    return -1;
+  }
+  else if (valA[property] > valB[property]) {
+    return 1;
+  }
+
+  return 0;
+}
+
+function comparePopularity(a, b) {
+  let aStats = a.eventStats;
+  let bStats = b.eventStats;
+
+  if ((aStats.attendingCount + (aStats.maybeCount / 2)) < (bStats.attendingCount + (bStats.maybeCount / 2)))
+    return 1;
+  if ((aStats.attendingCount + (aStats.maybeCount / 2)) > (bStats.attendingCount + (bStats.maybeCount / 2)))
+    return -1;
+  return 0;
+}
+
+function haversineDistance(coordsA, coordsB, isMiles) {
+  const R = 6371;
+
+  let latA = coordsA[0];
+  let lonA = coordsA[1];
+
+  let latB = coordsB[0];
+  let lonB = coordsB[1];
+
+  function toRad(x) {
+    return x * Math.PI / 180;
+  }
+
+  let x1 = latB - latA;
+  let dLat = toRad(x1);
+  let x2 = lonB - lonA;
+  let dLon = toRad(x2);
+  let a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(toRad(latA)) * Math.cos(toRad(latB)) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  let c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  let d = R * c;
+
+  if(!!isMiles) {
+    d /= 1.60934;
+  }
+
+  return d;
+}
 
 module.exports = router;
